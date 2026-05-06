@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecta 4 – Historia de México</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Nunito:wght@400;600;700;900&display=swap');
+
+:root {
+  --rojo: #dc2626;
+  --rojo-glow: #dc262666;
+  --rojo-dark: #7f1d1d;
+  --amarillo: #eab308;
+  --amarillo-glow: #eab30866;
+  --amarillo-dark: #713f12;
+  --bg: #0c0a09;
+  --surface: #1c1917;
+  --surface2: #292524;
+  --border: #44403c;
+  --text: #fafaf9;
+  --muted: #78716c;
+  --verde: #16a34a;
+  --verde-bg: #14532d33;
+  --error: #dc2626;
+  --error-bg: #7f1d1d33;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 10px 32px;
+  gap: 14px;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 90%, #dc262618 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 10%, #eab30818 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.app { position: relative; z-index: 1; width: 100%; max-width: 540px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+/* CABECERA */
+.header { text-align: center; }
+.header h1 {
+  font-family: 'Teko', sans-serif;
+  font-size: clamp(2.2rem, 7vw, 3.6rem);
+  font-weight: 700; letter-spacing: .08em; line-height: 1;
+  background: linear-gradient(135deg, var(--rojo) 0%, var(--amarillo) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 2px 12px #dc262644);
+}
+.header .sub {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 3px;
+}
+.header .sub span { color: var(--verde); font-weight: 700; }
+
+/* MARCADOR */
+.scoreboard {
+  display: flex; align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 4px 24px #00000055;
+  width: 100%;
+}
+.player-box {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 12px; gap: 3px; transition: background .3s;
+}
+.player-box.active { background: #ffffff08; }
+.player-box .tag { font-size: .65rem; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+.player-box .nombre { font-size: .88rem; font-weight: 700; }
+.player-box .puntaje { font-family: 'Teko', sans-serif; font-size: 2.4rem; line-height: 1; font-weight: 600; }
+.player-box.rojo-box .tag    { color: #fca5a5; }
+.player-box.rojo-box .nombre { color: var(--rojo); }
+.player-box.rojo-box .puntaje{ color: var(--rojo); text-shadow: 0 0 20px var(--rojo-glow); }
+.player-box.amari-box .tag    { color: #fde68a; }
+.player-box.amari-box .nombre { color: var(--amarillo); }
+.player-box.amari-box .puntaje{ color: var(--amarillo); text-shadow: 0 0 20px var(--amarillo-glow); }
+
+.score-mid {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 8px 14px; border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  gap: 4px; min-width: 90px;
+}
+.score-mid .vs { font-family: 'Teko', sans-serif; font-size: 1.8rem; color: var(--muted); }
+.rondas { font-size: .68rem; color: var(--muted); text-align: center; }
+
+/* TURNO */
+.turno-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 20px; border-radius: 50px;
+  font-weight: 800; font-size: .87rem;
+  border: 2px solid; transition: all .3s;
+}
+.turno-badge .bola { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+.turno-badge.t-rojo  { border-color: var(--rojo);    background: #dc262615; }
+.turno-badge.t-rojo  .bola { background: var(--rojo);    box-shadow: 0 0 8px var(--rojo); }
+.turno-badge.t-amari { border-color: var(--amarillo); background: #eab30815; }
+.turno-badge.t-amari .bola { background: var(--amarillo); box-shadow: 0 0 8px var(--amarillo); }
+
+/* TABLERO */
+.board-outer { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; }
+
+.flechas { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; }
+.flecha-btn {
+  background: none; border: none; cursor: pointer;
+  display: flex; justify-content: center; padding: 3px 0;
+  opacity: .3; transition: opacity .2s, transform .2s;
+}
+.flecha-btn:hover:not(:disabled) { opacity: 1; transform: translateY(3px); }
+.flecha-btn:disabled { cursor: not-allowed; opacity: .1; }
+.flecha-btn svg { width: 16px; height: 16px; }
+.flecha-btn.f-rojo  svg { fill: var(--rojo); }
+.flecha-btn.f-amari svg { fill: var(--amarillo); }
+
+.tablero-wrap {
+  background: #1a1614; border-radius: 16px; padding: 11px;
+  border: 2px solid #2d2520;
+  box-shadow: 0 8px 40px #00000088, inset 0 1px 0 #ffffff08;
+  width: 100%;
+}
+.tablero { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+
+.celda {
+  width: 100%; aspect-ratio: 1; border-radius: 50%;
+  background: #0c0a09; border: 2px solid #1f1b18;
+  box-shadow: inset 0 3px 8px #00000077;
+  transition: background .15s, box-shadow .15s;
+  position: relative; overflow: hidden;
+}
+.celda::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #ffffff1a 0%, transparent 55%);
+  pointer-events: none;
+}
+.celda.roja   { background: var(--rojo);    border-color: var(--rojo-dark);    box-shadow: 0 0 16px var(--rojo-glow),    inset 0 3px 8px #00000055; }
+.celda.amari  { background: var(--amarillo); border-color: var(--amarillo-dark); box-shadow: 0 0 16px var(--amarillo-glow), inset 0 3px 8px #00000055; }
+.celda.ganad  { animation: ganPulso .5s ease-in-out infinite alternate; }
+@keyframes ganPulso { from { transform: scale(1); } to { transform: scale(1.14); } }
+.celda.caer   { animation: caerAnim .3s cubic-bezier(.22,1,.36,1); }
+@keyframes caerAnim { from { transform: translateY(-55px) scale(.75); opacity: .3; } to { transform: none; opacity: 1; } }
+
+/* MODAL */
+.modal-fondo {
+  position: fixed; inset: 0; z-index: 100;
+  background: #000000cc; backdrop-filter: blur(7px);
+  display: flex; align-items: center; justify-content: center; padding: 14px;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.modal-fondo.abierto { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 26px 22px; max-width: 480px; width: 100%;
+  box-shadow: 0 24px 80px #000000aa;
+  transform: translateY(18px) scale(.97); transition: transform .3s;
+}
+.modal-fondo.abierto .modal { transform: none; }
+
+.modal-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.modal-bola { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+.modal-bola.roja   { background: var(--rojo);    box-shadow: 0 0 10px var(--rojo); }
+.modal-bola.amari  { background: var(--amarillo); box-shadow: 0 0 10px var(--amarillo); }
+.modal-jugador { font-weight: 900; font-size: .82rem; letter-spacing: .07em; text-transform: uppercase; }
+.modal-jugador.roja  { color: #fca5a5; }
+.modal-jugador.amari { color: #fde68a; }
+.modal-num { margin-left: auto; font-size: .72rem; color: var(--muted); background: var(--surface2); padding: 3px 10px; border-radius: 20px; }
+
+.cat-badge {
+  display: inline-flex; align-items: center;
+  font-size: .68rem; font-weight: 900; letter-spacing: .09em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+  background: #eab30820; color: var(--amarillo); border: 1px solid #eab30840;
+  margin-bottom: 10px;
+}
+
+.pregunta { font-size: 1rem; font-weight: 700; line-height: 1.55; margin-bottom: 18px; color: var(--text); }
+
+.opciones { display: flex; flex-direction: column; gap: 9px; }
+.opt {
+  background: var(--surface2); border: 2px solid var(--border); color: var(--text);
+  border-radius: 11px; padding: 11px 14px;
+  font-family: 'Nunito', sans-serif; font-size: .93rem; font-weight: 600;
+  text-align: left; cursor: pointer;
+  display: flex; align-items: center; gap: 11px; transition: all .16s;
+}
+.opt:hover:not(:disabled) { border-color: #a8a29e; background: #292524; transform: translateX(3px); }
+.opt .letra {
+  width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: .78rem; background: var(--border);
+  flex-shrink: 0; transition: background .16s;
+}
+.opt:hover:not(:disabled) .letra { background: #a8a29e; color: #0c0a09; }
+.opt.correcto { border-color: var(--verde); background: var(--verde-bg); }
+.opt.correcto .letra { background: var(--verde); color: #fff; }
+.opt.incorrecto { border-color: var(--error); background: var(--error-bg); }
+.opt.incorrecto .letra { background: var(--error); color: #fff; }
+.opt:disabled { cursor: default; }
+
+.feedback {
+  margin-top: 14px; padding: 11px 14px; border-radius: 10px;
+  font-weight: 700; font-size: .88rem;
+  display: none; align-items: center; gap: 8px;
+}
+.feedback.ok   { display: flex; background: var(--verde-bg);  color: #86efac; border: 1px solid #16a34a44; }
+.feedback.fail { display: flex; background: var(--error-bg);  color: #fca5a5; border: 1px solid #dc262644; }
+
+.btn-continuar {
+  margin-top: 16px; width: 100%; padding: 13px;
+  border: none; border-radius: 11px;
+  font-family: 'Teko', sans-serif; font-size: 1.3rem; font-weight: 600; letter-spacing: .08em;
+  cursor: pointer; display: none; transition: all .2s;
+}
+.btn-continuar.mostrar { display: block; }
+.btn-continuar.ok-btn  { background: linear-gradient(135deg, var(--verde), #22c55e); color: #fff; box-shadow: 0 4px 20px #16a34a44; }
+.btn-continuar.ok-btn:hover  { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-continuar.fail-btn { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+/* OVERLAY GANADOR */
+.overlay-gan {
+  position: fixed; inset: 0; z-index: 200;
+  background: #000000cc; backdrop-filter: blur(10px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  opacity: 0; pointer-events: none; transition: opacity .5s; padding: 20px;
+}
+.overlay-gan.show { opacity: 1; pointer-events: all; }
+.trofeo { font-size: 4rem; animation: trofBounce 1.1s ease infinite alternate; }
+@keyframes trofBounce { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-12px) rotate(6deg); } }
+.titulo-gan {
+  font-family: 'Teko', sans-serif; font-size: clamp(2.4rem, 8vw, 4.2rem);
+  font-weight: 700; letter-spacing: .08em; text-align: center; line-height: 1.05;
+}
+.titulo-gan.rojo  { color: var(--rojo);    text-shadow: 0 0 40px var(--rojo); }
+.titulo-gan.amari { color: var(--amarillo); text-shadow: 0 0 40px var(--amarillo); }
+.titulo-gan.empate { color: #a8a29e; }
+.sub-gan { color: var(--muted); font-size: .9rem; text-align: center; max-width: 300px; }
+.btn-reiniciar {
+  margin-top: 8px; padding: 14px 44px; border: none; border-radius: 50px;
+  background: linear-gradient(135deg, var(--rojo), var(--amarillo));
+  color: #0c0a09; font-family: 'Teko', sans-serif; font-size: 1.5rem; font-weight: 700; letter-spacing: .08em;
+  cursor: pointer; box-shadow: 0 8px 30px #dc262644; transition: all .2s;
+}
+.btn-reiniciar:hover { transform: translateY(-3px) scale(1.04); }
+
+.nota { font-size: .72rem; color: var(--muted); text-align: center; max-width: 360px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>CONECTA 4</h1>
+    <div class="sub">🇲🇽 Historia de México &nbsp;·&nbsp; <span>50 preguntas</span> &nbsp;·&nbsp; 2 jugadores</div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="player-box rojo-box active" id="box-p1">
+      <span class="tag">Jugador 1</span>
+      <span class="nombre">— Rojo —</span>
+      <span class="puntaje" id="pts-p1">0</span>
+    </div>
+    <div class="score-mid">
+      <span class="vs">VS</span>
+      <span class="rondas" id="rondas-txt">Turno 1</span>
+    </div>
+    <div class="player-box amari-box" id="box-p2">
+      <span class="tag">Jugador 2</span>
+      <span class="nombre">— Amarillo —</span>
+      <span class="puntaje" id="pts-p2">0</span>
+    </div>
+  </div>
+
+  <div class="turno-badge t-rojo" id="turno-badge">
+    <div class="bola"></div>
+    <span id="turno-txt">Turno de Jugador 1 (Rojo)</span>
+  </div>
+
+  <div class="board-outer">
+    <div class="flechas" id="flechas"></div>
+    <div class="tablero-wrap">
+      <div class="tablero" id="tablero"></div>
+    </div>
+  </div>
+
+  <p class="nota">Haz clic en una columna → responde la pregunta → coloca tu ficha si aciertas.<br>¡Conecta 4 fichas en línea para ganar!</p>
+</div>
+
+<!-- Modal trivia -->
+<div class="modal-fondo" id="modal-fondo">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="modal-bola" id="m-bola"></div>
+      <span class="modal-jugador" id="m-jugador"></span>
+      <span class="modal-num" id="m-num">#1</span>
+    </div>
+    <div class="cat-badge" id="m-cat">🇲🇽 Historia de México</div>
+    <p class="pregunta" id="m-pregunta"></p>
+    <div class="opciones" id="m-opciones"></div>
+    <div class="feedback" id="m-feedback"></div>
+    <button class="btn-continuar" id="btn-continuar"></button>
+  </div>
+</div>
+
+<!-- Overlay ganador -->
+<div class="overlay-gan" id="overlay-gan">
+  <div class="trofeo">🏆</div>
+  <div class="titulo-gan" id="gan-titulo"></div>
+  <p class="sub-gan" id="gan-sub"></p>
+  <button class="btn-reiniciar" onclick="reiniciarTodo()">NUEVA PARTIDA</button>
+</div>
+
+<script>
+/* =============================================================
+   50 PREGUNTAS GENERALES DE HISTORIA DE MÉXICO
+   ============================================================= */
+const PREGUNTAS = [
+  /* PERSONAJES */
+  { c:"Personajes", q:"¿Quién es conocido como el Padre de la Independencia de México?", o:["José María Morelos","Miguel Hidalgo","Benito Juárez","Agustín de Iturbide"], a:1 },
+  { c:"Personajes", q:"¿Quién fue el primer presidente de México?", o:["Agustín de Iturbide","Guadalupe Victoria","Vicente Guerrero","Benito Juárez"], a:1 },
+  { c:"Personajes", q:"¿Cómo se le conoce a Benito Juárez?", o:["El Libertador","Benemérito de las Américas","El Gran Reformador","Padre de la Patria"], a:1 },
+  { c:"Personajes", q:"¿Quién lideró la Revolución Mexicana en el norte del país?", o:["Emiliano Zapata","Venustiano Carranza","Pancho Villa","Álvaro Obregón"], a:2 },
+  { c:"Personajes", q:"¿Quién lideró el movimiento agrarista del sur durante la Revolución?", o:["Pancho Villa","Emiliano Zapata","Francisco I. Madero","Plutarco Elías Calles"], a:1 },
+  { c:"Personajes", q:"¿Quién fue el último emperador azteca?", o:["Moctezuma I","Moctezuma II","Cuitláhuac","Cuauhtémoc"], a:3 },
+  { c:"Personajes", q:"¿Quién fue el conquistador español que llegó a México en 1519?", o:["Francisco Pizarro","Hernán Cortés","Diego de Velázquez","Cristóbal Colón"], a:1 },
+  { c:"Personajes", q:"¿Quién fue la mujer indígena que sirvió de traductora a Hernán Cortés?", o:["Sor Juana Inés","La Malinche","Josefa Ortiz","Leona Vicario"], a:1 },
+  { c:"Personajes", q:"¿Quién fue conocida como 'La Corregidora' por avisar a los insurgentes?", o:["Leona Vicario","Josefa Ortiz de Domínguez","Carmen Serdán","Sor Juana"], a:1 },
+  { c:"Personajes", q:"¿Cómo se llamaba el emperador austriaco que gobernó México entre 1864 y 1867?", o:["Fernando I","Carlos I","Maximiliano de Habsburgo","Francisco José"], a:2 },
+
+  /* CIVILIZACIONES */
+  { c:"Civilizaciones", q:"¿Cuál era el nombre de la capital del Imperio Azteca?", o:["Teotihuacán","Chichén Itzá","Tenochtitlán","Palenque"], a:2 },
+  { c:"Civilizaciones", q:"¿En qué lago estaba construida Tenochtitlán?", o:["Lago de Pátzcuaro","Lago Texcoco","Lago Chapala","Lago de Cuitzeo"], a:1 },
+  { c:"Civilizaciones", q:"¿Qué civilización construyó las pirámides de Teotihuacán?", o:["Aztecas","Mayas","Teotihuacanos","Olmecas"], a:2 },
+  { c:"Civilizaciones", q:"¿Qué civilización es considerada la más antigua de Mesoamérica?", o:["Azteca","Maya","Olmeca","Tolteca"], a:2 },
+  { c:"Civilizaciones", q:"¿En qué estado mexicano se encuentra Chichén Itzá?", o:["Oaxaca","Chiapas","Yucatán","Campeche"], a:2 },
+  { c:"Civilizaciones", q:"¿Qué pueblo construyó Monte Albán, en Oaxaca?", o:["Aztecas","Zapotecas","Mayas","Mixtecas"], a:1 },
+  { c:"Civilizaciones", q:"¿Cómo se llamaba el dios del sol de los aztecas?", o:["Quetzalcóatl","Tláloc","Huitzilopochtli","Coatlicue"], a:2 },
+
+  /* CONQUISTA Y VIRREINATO */
+  { c:"Conquista y Virreinato", q:"¿Cómo se llamaba México durante el dominio español?", o:["Nueva Granada","Nueva Castilla","Nueva España","Nueva Galicia"], a:2 },
+  { c:"Conquista y Virreinato", q:"¿Cuántos años duró aproximadamente el Virreinato de la Nueva España?", o:["100 años","200 años","300 años","400 años"], a:2 },
+  { c:"Conquista y Virreinato", q:"¿Qué personaje español quemó sus propias naves para evitar la retirada de sus soldados?", o:["Diego de Velázquez","Hernán Cortés","Pedro de Alvarado","Bernal Díaz"], a:1 },
+  { c:"Conquista y Virreinato", q:"¿Qué religión impusieron los españoles a los indígenas?", o:["Islamismo","Protestantismo","Catolicismo","Judaísmo"], a:2 },
+
+  /* INDEPENDENCIA */
+  { c:"Independencia", q:"¿Con qué nombre se conoce el discurso que inició la Independencia de México?", o:["El Plan de Iguala","El Grito de Independencia","El Plan de Ayala","La Declaración de Apatzingán"], a:1 },
+  { c:"Independencia", q:"¿En qué ciudad se dio el Grito de Independencia?", o:["Ciudad de México","Guanajuato","Dolores Hidalgo","Querétaro"], a:2 },
+  { c:"Independencia", q:"¿Cuántos años duró la Guerra de Independencia de México?", o:["5 años","7 años","11 años","15 años"], a:2 },
+  { c:"Independencia", q:"¿Quién redactó el Plan de Iguala que unificó las fuerzas independentistas?", o:["Miguel Hidalgo","José María Morelos","Agustín de Iturbide","Vicente Guerrero"], a:2 },
+  { c:"Independencia", q:"¿Cómo se llamó el ejército que consumó la Independencia de México en 1821?", o:["Ejército Insurgente","Ejército Trigarante","Ejército Liberal","Ejército Nacional"], a:1 },
+
+  /* REFORMA Y SIGLO XIX */
+  { c:"Reforma y Siglo XIX", q:"¿Qué guerra enfrentó a liberales y conservadores en México entre 1858 y 1861?", o:["Guerra de Independencia","Guerra de Reforma","Guerra de Intervención","Guerra Cristera"], a:1 },
+  { c:"Reforma y Siglo XIX", q:"¿De qué origen étnico era Benito Juárez?", o:["Mestizo","Español","Zapoteca","Maya"], a:2 },
+  { c:"Reforma y Siglo XIX", q:"¿Qué país apoyó a Maximiliano de Habsburgo para gobernar México?", o:["España","Inglaterra","Francia","Alemania"], a:2 },
+  { c:"Reforma y Siglo XIX", q:"¿Qué famosa frase pronunció Benito Juárez sobre los derechos entre naciones?", o:["La patria es primero","El respeto al derecho ajeno es la paz","El que no transa no avanza","Sufragio efectivo, no reelección"], a:1 },
+  { c:"Reforma y Siglo XIX", q:"¿Qué presidente gobernó México durante más de 30 años en el siglo XIX?", o:["Benito Juárez","Sebastián Lerdo de Tejada","Porfirio Díaz","Manuel González"], a:2 },
+  { c:"Reforma y Siglo XIX", q:"¿Cómo se llama el largo período en que Porfirio Díaz gobernó México?", o:["El Porfiriato","La Reforma","La República Restaurada","El Imperio"], a:0 },
+
+  /* REVOLUCIÓN */
+  { c:"Revolución", q:"¿Cuál fue el lema de Francisco I. Madero en la Revolución Mexicana?", o:["Tierra y Libertad","Sufragio efectivo, no reelección","La patria es primero","Plan de Ayala"], a:1 },
+  { c:"Revolución", q:"¿Cuál era el principal lema de Emiliano Zapata?", o:["Sufragio efectivo","Tierra y Libertad","La unión hace la fuerza","Viva México"], a:1 },
+  { c:"Revolución", q:"¿Qué documento agrario redactó Emiliano Zapata exigiendo la devolución de tierras?", o:["Plan de San Luis","Plan de Guadalupe","Plan de Ayala","Plan de Iguala"], a:2 },
+  { c:"Revolución", q:"¿Qué presidente de México fue derrocado por un golpe de Estado en 1913?", o:["Porfirio Díaz","Venustiano Carranza","Francisco I. Madero","Álvaro Obregón"], a:2 },
+  { c:"Revolución", q:"¿En qué ciudad se redactó la Constitución de 1917?", o:["Ciudad de México","Guadalajara","Querétaro","San Luis Potosí"], a:2 },
+
+  /* SIGLO XX */
+  { c:"Siglo XX", q:"¿Qué institución fundó José Vasconcelos para llevar educación a todo México?", o:["UNAM","SEP","IPN","CONALEP"], a:1 },
+  { c:"Siglo XX", q:"¿Qué muralista mexicano pintó la historia de México en el Palacio Nacional?", o:["David Siqueiros","José Clemente Orozco","Diego Rivera","Rufino Tamayo"], a:2 },
+  { c:"Siglo XX", q:"¿Qué producto nationalizó el presidente Lázaro Cárdenas en 1938?", o:["El carbón","La electricidad","El petróleo","La banca"], a:2 },
+  { c:"Siglo XX", q:"¿Cómo se llama la empresa petrolera del Estado mexicano creada tras la expropiación?", o:["CFE","PEMEX","IMSS","SAT"], a:1 },
+  { c:"Siglo XX", q:"¿Qué partido político gobernó México de forma ininterrumpida durante 70 años?", o:["PAN","PRD","PRI","PT"], a:2 },
+  { c:"Siglo XX", q:"¿En qué ciudad ocurrió la masacre estudiantil del 2 de octubre de 1968?", o:["Guadalajara","Monterrey","Tlatelolco, Ciudad de México","Puebla"], a:2 },
+  { c:"Siglo XX", q:"¿Qué artista mexicana es famosa por sus autorretratos y su vida junto a Diego Rivera?", o:["María Izquierdo","Remedios Varo","Frida Kahlo","Leonora Carrington"], a:2 },
+  { c:"Siglo XX", q:"¿Qué escritor mexicano ganó el Premio Nobel de Literatura en 1990?", o:["Carlos Fuentes","Juan Rulfo","Octavio Paz","Alfonso Reyes"], a:2 },
+
+  /* GEOGRAFÍA E IDENTIDAD */
+  { c:"Geografía e Identidad", q:"¿Con qué país firmó México el Tratado de Libre Comercio en 1994?", o:["España y Cuba","Estados Unidos y Canadá","Brasil y Argentina","China y Japón"], a:1 },
+  { c:"Geografía e Identidad", q:"¿Cuál es el símbolo del centro de la Bandera de México?", o:["Un sol","Un águila con una serpiente","Una pirámide","Un volcán"], a:1 },
+  { c:"Geografía e Identidad", q:"¿Cuál es el volcán más alto de México?", o:["Popocatépetl","Iztaccíhuatl","Pico de Orizaba","Nevado de Toluca"], a:2 },
+  { c:"Geografía e Identidad", q:"¿Cómo se llamaba México antes de la Independencia?", o:["Gran Colombia","Nueva España","Nueva Castilla","Imperio Azteca"], a:1 },
+  { c:"Geografía e Identidad", q:"¿Cuál es la bebida más representativa de México, originaria de Jalisco?", o:["Pulque","Mezcal","Tequila","Tepache"], a:2 },
+];
+
+/* =============================================================
+   ESTADO DEL JUEGO
+   ============================================================= */
+const FILAS = 6, COLS = 7;
+const J1 = 1, J2 = 2;
+
+let tablero, turno, finJuego, colPendiente, pregUsadas, pregActual, nTurno;
+let puntos = { [J1]: 0, [J2]: 0 };
+
+const nomJ       = { [J1]: "Jugador 1", [J2]: "Jugador 2" };
+const colorCls   = { [J1]: "roja",  [J2]: "amari" };
+const colorLabel = { [J1]: "Rojo",  [J2]: "Amarillo" };
+const turnoClass = { [J1]: "t-rojo", [J2]: "t-amari" };
+const flechaClass= { [J1]: "f-rojo", [J2]: "f-amari" };
+
+function iniciar() {
+  tablero    = Array.from({length: FILAS}, () => Array(COLS).fill(0));
+  turno      = J1;
+  finJuego   = false;
+  colPendiente = null;
+  pregUsadas = [];
+  nTurno     = 0;
+  renderTablero();
+  actualizarTurno();
+  actualizarMarcador();
+}
+
+/* RENDER */
+function renderTablero() {
+  const tbl = document.getElementById('tablero');
+  const fle = document.getElementById('flechas');
+  tbl.innerHTML = '';
+  fle.innerHTML = '';
+
+  for (let c = 0; c < COLS; c++) {
+    const btn = document.createElement('button');
+    btn.className = `flecha-btn ${flechaClass[turno]}`;
+    btn.disabled  = finJuego;
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 17 L4 7 L20 7 Z"/></svg>`;
+    btn.addEventListener('click', () => clickColumna(c));
+    fle.appendChild(btn);
+  }
+
+  for (let r = 0; r < FILAS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cel = document.createElement('div');
+      cel.className = 'celda';
+      if (tablero[r][c] === J1) cel.classList.add('roja');
+      if (tablero[r][c] === J2) cel.classList.add('amari');
+      cel.addEventListener('click', () => clickColumna(c));
+      tbl.appendChild(cel);
+    }
+  }
+}
+
+function actualizarTurno() {
+  const badge = document.getElementById('turno-badge');
+  badge.className = `turno-badge ${turnoClass[turno]}`;
+  document.getElementById('turno-txt').textContent = `Turno de ${nomJ[turno]} (${colorLabel[turno]})`;
+  document.getElementById('box-p1').classList.toggle('active', turno === J1);
+  document.getElementById('box-p2').classList.toggle('active', turno === J2);
+  document.getElementById('rondas-txt').textContent = `Turno ${nTurno + 1}`;
+}
+
+function actualizarMarcador() {
+  document.getElementById('pts-p1').textContent = puntos[J1];
+  document.getElementById('pts-p2').textContent = puntos[J2];
+}
+
+/* COLUMNA */
+function clickColumna(col) {
+  if (finJuego) return;
+  if (tablero[0][col] !== 0) { flashLlena(col); return; }
+  colPendiente = col;
+  abrirModal();
+}
+
+function flashLlena(col) {
+  const celdas = document.querySelectorAll('.celda');
+  for (let r = 0; r < FILAS; r++) {
+    const cel = celdas[r * COLS + col];
+    cel.style.outline = '2px solid #ef4444';
+    setTimeout(() => cel.style.outline = '', 450);
+  }
+}
+
+/* TRIVIA */
+function elegirPregunta() {
+  const disp = PREGUNTAS.map((_, i) => i).filter(i => !pregUsadas.includes(i));
+  if (!disp.length) { pregUsadas = []; return elegirPregunta(); }
+  const idx = disp[Math.floor(Math.random() * disp.length)];
+  pregUsadas.push(idx);
+  return { ...PREGUNTAS[idx], num: idx + 1 };
+}
+
+function abrirModal() {
+  pregActual = elegirPregunta();
+  const col  = colorCls[turno];
+
+  document.getElementById('m-bola').className     = `modal-bola ${col}`;
+  document.getElementById('m-jugador').className  = `modal-jugador ${col}`;
+  document.getElementById('m-jugador').textContent = `${nomJ[turno]} – ${colorLabel[turno]}`;
+  document.getElementById('m-num').textContent    = `#${pregActual.num}`;
+  document.getElementById('m-cat').textContent    = `🇲🇽 ${pregActual.c}`;
+  document.getElementById('m-pregunta').textContent = pregActual.q;
+
+  const letras = ['A','B','C','D'];
+  const opDiv  = document.getElementById('m-opciones');
+  opDiv.innerHTML = '';
+  pregActual.o.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="letra">${letras[i]}</span>${op}`;
+    btn.addEventListener('click', () => responder(i, btn));
+    opDiv.appendChild(btn);
+  });
+
+  document.getElementById('m-feedback').className   = 'feedback';
+  document.getElementById('btn-continuar').className = 'btn-continuar';
+  document.getElementById('modal-fondo').classList.add('abierto');
+}
+
+function responder(idx, btn) {
+  document.querySelectorAll('.opt').forEach(b => b.disabled = true);
+  const fb = document.getElementById('m-feedback');
+  const bc = document.getElementById('btn-continuar');
+
+  if (idx === pregActual.a) {
+    btn.classList.add('correcto');
+    fb.className = 'feedback ok';
+    fb.innerHTML = '✅ ¡Correcto! Coloca tu ficha.';
+    bc.className = 'btn-continuar ok-btn mostrar';
+    bc.textContent = '▶ COLOCAR FICHA';
+    bc.onclick = () => cerrarYColocar(true);
+  } else {
+    btn.classList.add('incorrecto');
+    document.querySelectorAll('.opt')[pregActual.a].classList.add('correcto');
+    fb.className = 'feedback fail';
+    fb.innerHTML = `❌ Incorrecto. Respuesta correcta: <strong>${pregActual.o[pregActual.a]}</strong>`;
+    bc.className = 'btn-continuar fail-btn mostrar';
+    bc.textContent = '▶ CONTINUAR (pierdes turno)';
+    bc.onclick = () => cerrarYColocar(false);
+  }
+}
+
+function cerrarYColocar(correcto) {
+  document.getElementById('modal-fondo').classList.remove('abierto');
+  nTurno++;
+  correcto ? colocarFicha() : cambiarTurno();
+}
+
+/* COLOCAR FICHA */
+function colocarFicha() {
+  const col = colPendiente;
+  let fila  = -1;
+  for (let r = FILAS - 1; r >= 0; r--) {
+    if (tablero[r][col] === 0) { tablero[r][col] = turno; fila = r; break; }
+  }
+  puntos[turno]++;
+  actualizarMarcador();
+  renderTablero();
+
+  requestAnimationFrame(() => {
+    const celdas = document.querySelectorAll('.celda');
+    const cel = celdas[fila * COLS + col];
+    if (cel) cel.classList.add('caer');
+  });
+
+  const ganad = verificarGanador(turno);
+  if (ganad) {
+    finJuego = true;
+    setTimeout(() => resaltarGanadoras(ganad), 180);
+    setTimeout(() => mostrarGanador(), 850);
+    return;
+  }
+  if (tableroLleno()) { finJuego = true; setTimeout(() => mostrarEmpate(), 600); return; }
+  cambiarTurno();
+}
+
+function cambiarTurno() {
+  turno = turno === J1 ? J2 : J1;
+  actualizarTurno();
+  renderTablero();
+}
+
+/* VERIFICAR GANADOR */
+function verificarGanador(j) {
+  for (let r = 0; r < FILAS; r++)
+    for (let c = 0; c <= COLS-4; c++)
+      if ([0,1,2,3].every(i => tablero[r][c+i] === j))
+        return [[r,c],[r,c+1],[r,c+2],[r,c+3]];
+  for (let r = 0; r <= FILAS-4; r++)
+    for (let c = 0; c < COLS; c++)
+      if ([0,1,2,3].every(i => tablero[r+i][c] === j))
+        return [[r,c],[r+1,c],[r+2,c],[r+3,c]];
+  for (let r = 3; r < FILAS; r++)
+    for (let c = 0; c <= COLS-4; c++)
+      if ([0,1,2,3].every(i => tablero[r-i][c+i] === j))
+        return [[r,c],[r-1,c+1],[r-2,c+2],[r-3,c+3]];
+  for (let r = 0; r <= FILAS-4; r++)
+    for (let c = 0; c <= COLS-4; c++)
+      if ([0,1,2,3].every(i => tablero[r+i][c+i] === j))
+        return [[r,c],[r+1,c+1],[r+2,c+2],[r+3,c+3]];
+  return null;
+}
+
+function tableroLleno() { return tablero[0].every(v => v !== 0); }
+
+function resaltarGanadoras(celdas) {
+  const todas = document.querySelectorAll('.celda');
+  celdas.forEach(([r, c]) => todas[r * COLS + c].classList.add('ganad'));
+}
+
+function mostrarGanador() {
+  const ov = document.getElementById('overlay-gan');
+  document.getElementById('gan-titulo').className   = `titulo-gan ${colorCls[turno]}`;
+  document.getElementById('gan-titulo').textContent = `¡Ganó ${nomJ[turno]}!`;
+  document.getElementById('gan-sub').textContent    = `Color: ${colorLabel[turno]}  ·  Fichas colocadas: ${puntos[turno]}`;
+  ov.classList.add('show');
+}
+
+function mostrarEmpate() {
+  document.getElementById('gan-titulo').className   = 'titulo-gan empate';
+  document.getElementById('gan-titulo').textContent = '¡Empate!';
+  document.getElementById('gan-sub').textContent    = 'El tablero se llenó sin que nadie conectara 4.';
+  document.getElementById('overlay-gan').classList.add('show');
+}
+
+function reiniciarTodo() {
+  document.getElementById('overlay-gan').classList.remove('show');
+  puntos = { [J1]: 0, [J2]: 0 };
+  iniciar();
+}
+
+iniciar();
+</script>
+</body>
+</html>
